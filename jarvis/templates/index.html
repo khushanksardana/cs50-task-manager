@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Assistant</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Main Chat UI */
+        #chatUI {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f8ff;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #4a90e2;
+        }
+
+        form {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #4a90e2;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #357ab8;
+        }
+
+        .microphone-button {
+            background-color: #e94e77;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .microphone-button:hover {
+            background-color: #c6395a;
+        }
+
+        /* Offline Button */
+        #startBtn {
+            background-color: #e94e77;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: absolute;
+            bottom: 50px;
+        }
+
+        #startBtn:hover {
+            background-color: #c6395a;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Chat UI -->
+    <div id="chatUI">
+        <h1>Jarvis Assistant</h1>
+
+        <form id="voice_command_form" action="/ask" method="post">
+            <label for="user_input">Enter your command or question:</label><br>
+            <input type="text" id="user_input" name="user_input" required>
+            <button type="submit">Submit</button>
+        </form>
+
+        <button class="microphone-button" onclick="startRecognition()">🎤 Speak</button>
+
+        <div>
+            {% if response %}
+                <p id="ai_response">{{ response|safe }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+
+    <!-- Offline State -->
+    <div id="offline">
+        <button id="startBtn" onclick="startAssistant()">Start Assistant</button>
+    </div>
+
+    <script>
+        // Start Assistant function
+        function startAssistant() {
+            // Hide offline and show chat UI
+            document.getElementById('offline').style.display = 'none';
+            document.getElementById('chatUI').style.display = 'flex';
+        }
+
+        // Start speech recognition
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Your browser does not support speech recognition. Please try Chrome.");
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = "en-US";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const userInput = event.results[0][0].transcript;
+                document.getElementById("user_input").value = userInput;
+                document.getElementById("voice_command_form").submit();
+            };
+
+            recognition.onerror = (event) => {
+                alert("Speech recognition error: " + event.error);
+                console.error('Speech recognition error: ', event.error);
+            };
+        }
+
+        // Text to Speech Response
+        function speakResponse(text) {
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = 'en-US';
+            speech.volume = 1; // Max volume
+            speech.rate = 1; // Normal speed
+            speech.pitch = 1; // Normal pitch
+            speechSynthesis.speak(speech);
+        }
+
+        // Listen for AI response and speak it
+        window.onload = function() {
+            const aiResponseElement = document.getElementById('ai_response');
+            if (aiResponseElement) {
+                const responseText = aiResponseElement.textContent.trim();
+                if (responseText) {
+                    speakResponse(responseText);
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
